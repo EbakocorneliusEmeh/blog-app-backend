@@ -12,7 +12,7 @@ async function bootstrap() {
 
     const api_flow = process.env.NEXT_PUBLIC_API_URL
     app.enableCors({
-      origin: api_flow,
+      origin: `http://localhost:3000`,
       credentials: true,
     });
 
