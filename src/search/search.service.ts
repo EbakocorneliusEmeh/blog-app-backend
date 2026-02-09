@@ -27,6 +27,8 @@ interface LeanUser {
   lastActive?: Date;
   isVerified?: boolean;
   createdAt?: Date;
+  score?:number;
+
 }
 
 interface LeanPost {
@@ -44,6 +46,8 @@ interface LeanPost {
   isFeatured?: boolean;
   featuredImage?: string;
   readingTime?: number;
+  score?:number;
+
 }
 
 export interface DailySearchAnalytics {
