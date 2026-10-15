@@ -30,7 +30,17 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     TenantModule,
   ],
   controllers: [AuthController],
+<<<<<<< Updated upstream
   providers: [AuthService, JwtAuthGuard], // 👈 provide guard here
   exports: [JwtModule, AuthService, JwtAuthGuard], // 👈 export so BlogsModule can use them
+=======
+  // allow disabling Google auth during development/testing by setting DISABLE_GOOGLE_AUTH=true
+  providers: [
+    AuthService,
+    JwtAuthGuard,
+    ...(process.env.DISABLE_GOOGLE_AUTH === 'true' ? [] : [GoogleStrategy]),
+  ],
+  exports: [JwtModule, AuthService, JwtAuthGuard],
+>>>>>>> Stashed changes
 })
 export class AuthModule {}

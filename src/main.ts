@@ -3,19 +3,48 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     const logger = new Logger();
 
+<<<<<<< Updated upstream
 
     const api_flow = process.env.NEXT_PUBLIC_API_URL
+=======
+    const configuredFrontendOrigins = [
+      process.env.FRONTEND_URL,
+      process.env.NEXT_PUBLIC_FRONTEND_URL,
+    ]
+      .filter(Boolean)
+      .flatMap((origin) => origin!.split(','))
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+    const frontendOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      ...configuredFrontendOrigins,
+    ];
+
+>>>>>>> Stashed changes
     app.enableCors({
-      origin: `http://localhost:3000`,
+      origin: frontendOrigins,
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
+      allowedHeaders: 'Content-Type, Authorization, X-Requested-With, Accept',
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     });
 
+<<<<<<< Updated upstream
+=======
+    // Increase payload size limit
+    app.use(json({ limit: '50mb' }));
+    app.use(urlencoded({ extended: true, limit: '50mb' }));
+
+>>>>>>> Stashed changes
     // Global validation pipe
     app.useGlobalPipes(
       new ValidationPipe({
@@ -25,16 +54,14 @@ async function bootstrap() {
       }),
     );
 
-
     app.useStaticAssets(join(__dirname, '..', 'uploads'), {
       prefix: '/uploads/',
     });
 
     const port = process.env.PORT || 4000;
-    console.log('MONGO_URI =', process.env.MONGO_URI);
 
-    await app.listen(port);
-    logger.log(`Server is listening on port ${port}`);
+    await app.listen(port, '0.0.0.0');
+    logger.log(`🚀 Server is running on http://localhost:${port}`);
   } catch (error) {
     console.error('Error starting server:', error);
     process.exit(1);

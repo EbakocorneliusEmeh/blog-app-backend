@@ -1,17 +1,21 @@
 import { 
   Controller, Get, Patch, UseGuards, Req, 
-  UseInterceptors, UploadedFile, BadRequestException,
-  Body, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,
+  UseInterceptors, UploadedFiles, BadRequestException,
+  Body,
   Logger,
+<<<<<<< Updated upstream
   NotFoundException // Add this import
+=======
+  NotFoundException, Post
+>>>>>>> Stashed changes
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TenantService } from '../tenants/tenant.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { UsersService } from './users.service';
 
-@Controller('user')
+@Controller('users')
 @UseGuards(JwtAuthGuard)
 export class DashboardController {
   private readonly logger = new Logger(DashboardController.name);
@@ -42,6 +46,7 @@ export class DashboardController {
           displayName: user.displayName || user.username,
           bio: user.bio || '',
           profilePicture: user.profilePicture,
+          picture: user.profilePicture || user.picture,
           role: user.role,
           hasBlog: !!user.tenantId,
           lastLoginAt: user.lastLoginAt,
@@ -55,20 +60,16 @@ export class DashboardController {
 
   // Upload/Update profile picture - THIS WILL BE ACCESSIBLE AT /user/profile/picture
   @Patch('profile/picture')
-  @UseInterceptors(FileInterceptor('profilePicture'))
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'profilePicture', maxCount: 1 },
+    { name: 'avatar', maxCount: 1 },
+  ]))
   async updateProfilePicture(
     @Req() req, 
-    @UploadedFile(
-      new ParseFilePipe({
-        fileIsRequired: true,
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|webp)$/ }),
-        ],
-      })
-    ) file: Express.Multer.File
+    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
   ) {
     try {
+      const file = this.getProfilePictureFile(files);
       this.logger.log(`Uploading profile picture for user: ${req.user?.userId || req.user?.sub}`);
       
       const userId = req.user.sub || req.user.userId;
@@ -79,6 +80,7 @@ export class DashboardController {
         throw new BadRequestException('User not found');
       }
       
+<<<<<<< Updated upstream
       // Delete old picture from Cloudinary if exists
       if (currentUser.profilePicturePublicId) {
         try {
@@ -90,6 +92,8 @@ export class DashboardController {
       }
 
       // Upload new picture to Cloudinary
+=======
+>>>>>>> Stashed changes
       this.logger.log(`Uploading new profile picture: ${file.originalname} (${file.size} bytes)`);
       const upload = await this.cloudinaryService.uploadImage(file, 'user-profiles');
       
@@ -100,11 +104,21 @@ export class DashboardController {
         upload.publicId
       );
 
+      if (currentUser.profilePicturePublicId) {
+        try {
+          await this.cloudinaryService.deleteImage(currentUser.profilePicturePublicId);
+          this.logger.log(`Deleted old profile picture: ${currentUser.profilePicturePublicId}`);
+        } catch (deleteError) {
+          this.logger.warn(`Failed to delete old profile picture: ${deleteError.message}`);
+        }
+      }
+
       return { 
         success: true,
         message: 'Profile picture updated successfully',
         data: {
-          profilePicture: upload.url
+          profilePicture: upload.url,
+          picture: upload.url,
         }
       };
     } catch (error) {
@@ -113,7 +127,41 @@ export class DashboardController {
     }
   }
 
+<<<<<<< Updated upstream
   // Remove profile picture - THIS WILL BE ACCESSIBLE AT /user/profile/picture/remove
+=======
+  @Post('avatar')
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'profilePicture', maxCount: 1 },
+    { name: 'avatar', maxCount: 1 },
+  ]))
+  async uploadAvatar(
+    @Req() req,
+    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
+  ) {
+    return this.updateProfilePicture(req, files);
+  }
+
+  private getProfilePictureFile(
+    files: Record<string, Express.Multer.File[]> | undefined,
+  ): Express.Multer.File {
+    const file = files?.profilePicture?.[0] ?? files?.avatar?.[0];
+    if (!file) {
+      throw new BadRequestException('No profile picture uploaded');
+    }
+
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Invalid file type. Only images are allowed.');
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('File too large. Maximum size is 5MB.');
+    }
+
+    return file;
+  }
+
+>>>>>>> Stashed changes
   @Patch('profile/picture/remove')
   async removeProfilePicture(@Req() req) {
     try {
@@ -188,7 +236,8 @@ export class DashboardController {
           email: updatedUser.email,
           displayName: updatedUser.displayName,
           bio: updatedUser.bio,
-          profilePicture: updatedUser.profilePicture
+          profilePicture: updatedUser.profilePicture,
+          picture: updatedUser.profilePicture || updatedUser.picture,
         }
       };
     } catch (error) {
