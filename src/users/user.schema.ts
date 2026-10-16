@@ -9,8 +9,8 @@ export class User extends Document {
   @Prop({ required: true, unique: true })
   username: string;
 
-  @Prop({ required: true })
-  passwordHash: string;
+  @Prop({ required: false, default: '' })
+  passwordHash?: string;
 
   @Prop({ default: 'reader', enum: ['reader', 'author', 'admin'] })
   role: string;
@@ -53,6 +53,15 @@ export class User extends Document {
 
   @Prop({ default: 0 })
   loginCount?: number;
+
+  @Prop()
+  picture?: string;
+
+  @Prop()
+  firstName?: string;
+
+  @Prop()
+  lastName?: string;
 
  
 }

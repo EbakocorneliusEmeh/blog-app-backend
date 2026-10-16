@@ -10,11 +10,16 @@ import { User, UserSchema } from '../users/user.schema';
 import { Tenant, TenantSchema } from '../tenants/tenant.schema';
 import { TenantModule } from '../tenants/tenant.module';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtStrategy } from './strategies/jwt.strategy';
+// import { EmailModule } from '../email/email.module'; 
+import { GoogleStrategy } from './strategies/google.strategy'; 
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     ConfigModule,
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }), 
+    // EmailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -28,19 +33,16 @@ import { JwtAuthGuard } from './jwt-auth.guard';
       { name: Tenant.name, schema: TenantSchema },
     ]),
     TenantModule,
+    UsersModule,
   ],
   controllers: [AuthController],
-<<<<<<< Updated upstream
-  providers: [AuthService, JwtAuthGuard], // 👈 provide guard here
-  exports: [JwtModule, AuthService, JwtAuthGuard], // 👈 export so BlogsModule can use them
-=======
   // allow disabling Google auth during development/testing by setting DISABLE_GOOGLE_AUTH=true
   providers: [
     AuthService,
     JwtAuthGuard,
+    JwtStrategy,
     ...(process.env.DISABLE_GOOGLE_AUTH === 'true' ? [] : [GoogleStrategy]),
   ],
   exports: [JwtModule, AuthService, JwtAuthGuard],
->>>>>>> Stashed changes
 })
 export class AuthModule {}

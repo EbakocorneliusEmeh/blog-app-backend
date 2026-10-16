@@ -97,13 +97,9 @@ import {
   IsEnum, 
   MinLength, 
   MaxLength, 
-<<<<<<< Updated upstream
-  IsArray 
-=======
   IsArray,
   IsNumber, 
   Validate
->>>>>>> Stashed changes
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { isURL } from 'class-validator';

@@ -29,32 +29,26 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     refreshToken: string,
     profile: any,
   ) {
-    console.log('--- Google Strategy: Validating user ---');
-    console.log('Received profile:', JSON.stringify(profile, null, 2));
     try {
-      const { name, emails, photos, _json } = profile;
+      const email = profile?.emails?.[0]?.value || profile?._json?.email;
+      const isEmailVerified =
+        profile?._json?.email_verified === true || profile?.emails?.[0]?.verified === true;
 
-
-      if (!_json?.email_verified) {
-        throw new UnauthorizedException('Google email is not verified');
-      }
-
-      if (!emails || emails.length === 0) {
+      if (!email) {
         throw new UnauthorizedException('No email found from Google');
       }
 
-      const user = await this.authService.validateGoogleUser({
-        email: emails[0].value,
-        firstName: name.givenName,
-        lastName: name.familyName || '',
-        picture: photos?.[0]?.value || null,
-      });
+      if (!isEmailVerified) {
+        throw new UnauthorizedException('Google email is not verified');
+      }
 
-      console.log('User validated successfully:', user);
-      return user;
-      
+  return this.authService.validateGoogleUser({
+        email,
+        firstName: profile?.name?.givenName,
+        lastName: profile?.name?.familyName,
+        picture: profile.photos?.[0]?.value,
+      });
     } catch (error) {
-      console.error('!!! Google Strategy: Validation Error !!!', error);
       throw error;
     }
   }

@@ -84,10 +84,16 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.userModel.findOne({ email: dto.email });
-    if (!user) throw new BadRequestException('email is in use');
+    if (!user) throw new BadRequestException('Invalid email or password');
+
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'You have previously logged in with a social account. Please use your social account to log in.',
+      );
+    }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!valid) throw new BadRequestException('Invalid email or passwoed try again');
+    if (!valid) throw new BadRequestException('Invalid email or password');
 
     // Find tenant
     let tenant = await this.tenantModel.findOne({ 
@@ -141,6 +147,119 @@ export class AuthService {
     };
   }
 
+  async validateGoogleUser(profile: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    picture?: string;
+  }) {
+    const email = profile.email.trim().toLowerCase();
+    let user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      const usernameBase = (profile.firstName || email.split('@')[0])
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '')
+        .slice(0, 24) || 'user';
+
+      let username = usernameBase;
+      let existingUser = await this.userModel.findOne({ username });
+      let counter = 1;
+
+      while (existingUser) {
+        username = `${usernameBase}${counter}`;
+        existingUser = await this.userModel.findOne({ username });
+        counter += 1;
+      }
+
+      user = await this.userModel.create({
+        email,
+        username,
+        passwordHash: undefined,
+        role: 'author',
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        profilePicture: profile.picture || '',
+        displayName:
+          [profile.firstName, profile.lastName].filter(Boolean).join(' ') || username,
+      });
+
+      const tenantName = profile.firstName || username;
+      const tenantSlug = slugify(`${tenantName}-${username}`, {
+        lower: true,
+        strict: true,
+      });
+
+      const tenant = await this.tenantModel.create({
+        owner: user._id.toString(),
+        userId: user._id.toString(),
+        name: tenantName,
+        slug: tenantSlug,
+      });
+
+      user.tenantId = tenant._id.toString();
+      user.role = 'author';
+      await user.save();
+    } else {
+      user.firstName = user.firstName || profile.firstName || '';
+      user.lastName = user.lastName || profile.lastName || '';
+      user.profilePicture = user.profilePicture || profile.picture || '';
+      user.displayName =
+        user.displayName ||
+        [profile.firstName, profile.lastName].filter(Boolean).join(' ') ||
+        user.username;
+
+      if (!user.tenantId) {
+        const tenantName = profile.firstName || user.username;
+        const tenantSlug = slugify(`${tenantName}-${user.username}`, {
+          lower: true,
+          strict: true,
+        });
+
+        const tenant = await this.tenantModel.create({
+          owner: user._id.toString(),
+          userId: user._id.toString(),
+          name: tenantName,
+          slug: tenantSlug,
+        });
+
+        user.tenantId = tenant._id.toString();
+        user.role = 'author';
+      }
+
+      await user.save();
+    }
+
+    const tenant = await this.tenantModel.findOne({
+      $or: [{ owner: user._id.toString() }, { userId: user._id.toString() }],
+    });
+
+    const tokenPayload = {
+      sub: user._id.toString(),
+      userId: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      role: user.role || 'author',
+      hasBlog: true,
+      tenantId: user.tenantId || tenant?._id.toString(),
+    };
+
+    const token = this.jwtService.sign(tokenPayload);
+
+    return {
+      accessToken: token,
+      user: {
+        id: user._id,
+        userId: user._id.toString(),
+        email: user.email,
+        username: user.username,
+        role: user.role || 'author',
+        hasBlog: true,
+        tenantId: user.tenantId || tenant?._id,
+      },
+    };
+  }
+
   async upgradeToAuthor(userId: string, tenantId: string) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new BadRequestException('User not found');
@@ -161,4 +280,6 @@ export class AuthService {
 
     return this.jwtService.sign(tokenPayload);
   }
+
+
 }

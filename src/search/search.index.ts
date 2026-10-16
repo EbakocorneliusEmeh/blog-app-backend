@@ -15,15 +15,6 @@ export class SearchIndexService implements OnApplicationBootstrap {
     await this.createIndexes();
   }
 
-<<<<<<< Updated upstream
-  async createIndexes() {
-    try {
-      // Text indexes for search
-      await this.userModel.collection.createIndex(
-        { username: 'text', displayName: 'text', bio: 'text' },
-        { name: 'user_search_text', weights: { username: 3, displayName: 2, bio: 1 } }
-      );
-=======
 async createIndexes() {
   try {
     console.log('Starting search index creation...');
@@ -38,7 +29,6 @@ async createIndexes() {
       idx.name === 'post_search_text' || 
       (idx.weights && Object.keys(idx.weights).length > 0)
     );
->>>>>>> Stashed changes
 
       await this.postModel.collection.createIndex(
         { title: 'text', excerpt: 'text', tags: 'text' },

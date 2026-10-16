@@ -3,11 +3,7 @@ import {
   UseInterceptors, UploadedFiles, BadRequestException,
   Body,
   Logger,
-<<<<<<< Updated upstream
-  NotFoundException // Add this import
-=======
   NotFoundException, Post
->>>>>>> Stashed changes
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -46,7 +42,6 @@ export class DashboardController {
           displayName: user.displayName || user.username,
           bio: user.bio || '',
           profilePicture: user.profilePicture,
-          picture: user.profilePicture || user.picture,
           role: user.role,
           hasBlog: !!user.tenantId,
           lastLoginAt: user.lastLoginAt,
@@ -80,20 +75,7 @@ export class DashboardController {
         throw new BadRequestException('User not found');
       }
       
-<<<<<<< Updated upstream
-      // Delete old picture from Cloudinary if exists
-      if (currentUser.profilePicturePublicId) {
-        try {
-          await this.cloudinaryService.deleteImage(currentUser.profilePicturePublicId);
-          this.logger.log(`Deleted old profile picture: ${currentUser.profilePicturePublicId}`);
-        } catch (deleteError) {
-          this.logger.warn(`Failed to delete old profile picture: ${deleteError.message}`);
-        }
-      }
 
-      // Upload new picture to Cloudinary
-=======
->>>>>>> Stashed changes
       this.logger.log(`Uploading new profile picture: ${file.originalname} (${file.size} bytes)`);
       const upload = await this.cloudinaryService.uploadImage(file, 'user-profiles');
       
@@ -127,9 +109,6 @@ export class DashboardController {
     }
   }
 
-<<<<<<< Updated upstream
-  // Remove profile picture - THIS WILL BE ACCESSIBLE AT /user/profile/picture/remove
-=======
   @Post('avatar')
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'profilePicture', maxCount: 1 },
@@ -160,8 +139,6 @@ export class DashboardController {
 
     return file;
   }
-
->>>>>>> Stashed changes
   @Patch('profile/picture/remove')
   async removeProfilePicture(@Req() req) {
     try {
@@ -236,8 +213,8 @@ export class DashboardController {
           email: updatedUser.email,
           displayName: updatedUser.displayName,
           bio: updatedUser.bio,
+
           profilePicture: updatedUser.profilePicture,
-          picture: updatedUser.profilePicture || updatedUser.picture,
         }
       };
     } catch (error) {

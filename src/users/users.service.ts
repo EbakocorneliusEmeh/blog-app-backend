@@ -141,11 +141,6 @@ export class UsersService {
       .limit(limit)
       .exec();
   }
-<<<<<<< Updated upstream
-}
-=======
-
-  // Add this method to find or create Google users
 async findOrCreateFromGoogle(googleData: {
   email: string;
   firstName: string;
@@ -160,9 +155,9 @@ async findOrCreateFromGoogle(googleData: {
     // Update existing user with latest Google data
     user.firstName = googleData.firstName;
     user.lastName = googleData.lastName;
-    user.picture = googleData.picture;
+    user.profilePicture = googleData.picture;
     user.displayName = googleData.displayName;
-    user.profilePicture = googleData.picture; // Keep both in sync
+    user.picture = googleData.picture; // Keep both in sync
     user.lastLoginAt = new Date();
     user.loginCount = (user.loginCount || 0) + 1;
     
@@ -189,7 +184,7 @@ async findOrCreateFromGoogle(googleData: {
 
 async syncGooglePicture(userId: string, googlePictureUrl: string): Promise<UserDocument> {
   return this.update(userId, {
-    picture: googlePictureUrl,
+
     profilePicture: googlePictureUrl, 
   });
 }
@@ -200,4 +195,3 @@ async isGoogleUser(userId: string): Promise<boolean> {
   return user ? !user.passwordHash : false;
 }
 }
->>>>>>> Stashed changes

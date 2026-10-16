@@ -10,10 +10,6 @@ async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     const logger = new Logger();
 
-<<<<<<< Updated upstream
-
-    const api_flow = process.env.NEXT_PUBLIC_API_URL
-=======
     const configuredFrontendOrigins = [
       process.env.FRONTEND_URL,
       process.env.NEXT_PUBLIC_FRONTEND_URL,
@@ -28,7 +24,6 @@ async function bootstrap() {
       ...configuredFrontendOrigins,
     ];
 
->>>>>>> Stashed changes
     app.enableCors({
       origin: frontendOrigins,
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -38,13 +33,9 @@ async function bootstrap() {
       optionsSuccessStatus: 204,
     });
 
-<<<<<<< Updated upstream
-=======
     // Increase payload size limit
     app.use(json({ limit: '50mb' }));
     app.use(urlencoded({ extended: true, limit: '50mb' }));
-
->>>>>>> Stashed changes
     // Global validation pipe
     app.useGlobalPipes(
       new ValidationPipe({
