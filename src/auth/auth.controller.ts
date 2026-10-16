@@ -60,7 +60,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(OptionalGoogleAuthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const { accessToken } = req.user || {};
+    const { accessToken, user } = req.user || {};
 
     const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
 
@@ -68,6 +68,10 @@ export class AuthController {
       throw new NotFoundException();
     }
 
-    return res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
+    const query = user
+      ? `?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(user))}`
+      : `?token=${accessToken}`;
+
+    return res.redirect(`${frontendUrl}/auth/callback${query}`);
   }
 }
