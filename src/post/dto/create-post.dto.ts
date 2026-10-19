@@ -1,14 +1,42 @@
+
+
 // import { 
 //   IsString, 
 //   IsNotEmpty, 
 //   IsOptional, 
 //   IsEnum, 
-//   IsUrl, 
 //   MinLength, 
 //   MaxLength, 
-//   IsArray 
+//   IsArray,
+//   IsNumber, 
+//   Validate
 // } from 'class-validator';
 // import { Transform } from 'class-transformer';
+// import { isURL } from 'class-validator';
+
+// import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+
+// // Custom validator: URL or gallery filename
+// @ValidatorConstraint({ name: 'IsUrlOrGallery', async: false })
+// class IsUrlOrGallery implements ValidatorConstraintInterface {
+//   validate(value: any, args: ValidationArguments) {
+//     if (!value) return true; // optional
+//     if (typeof value !== 'string') return false;
+
+//     // Allow full URL
+//     if (isURL(value, { require_protocol: true })) return true;
+
+//     // Allow "gallery selection" — simple filename pattern
+//     const galleryPattern = /^[\w-]+\.(jpg|jpeg|png|webp)$/i;
+//     if (galleryPattern.test(value)) return true;
+
+//     return false;
+//   }
+
+//   defaultMessage(args: ValidationArguments) {
+//     return 'Thumbnail must be a valid URL or a gallery image filename';
+//   }
+// }
 
 // export class CreatePostDto {
 //   @IsString()
@@ -17,7 +45,6 @@
 //   @MaxLength(200)
 //   title: string;
 
-//   @IsString()
 //   @IsOptional()
 //   @Transform(({ value, obj }) => {
 
@@ -38,15 +65,7 @@
 
   
 //   @IsOptional()
-//   @Transform(({ value }) => {
-//     if (value === undefined || value === null || value === '') {
-//       return undefined;
-//     }
-//     return value;
-//   })
-//   @IsUrl({ require_protocol: true }, { 
-//     message: 'Thumbnail must be a valid URL' 
-//   })
+//   @Validate(IsUrlOrGallery)
 //   thumbnail?: string;
 
 // @IsOptional()
@@ -69,15 +88,11 @@
 //   @IsArray()
 //   @IsString({ each: true })
 //   tags?: string[];
-//   @IsOptional()
-// @IsArray()
-// @IsString({ each: true })
-// categories?: string[];
-
 
 //   @IsOptional()
 //   @IsString()
-//   authorId?: string; 
+//   authorId?: string;
+
 
 //   @IsOptional()
 //   @IsString()
@@ -90,21 +105,24 @@
 //   status?: 'draft' | 'published' = 'published';
 // }
 
-import { 
-  IsString, 
-  IsNotEmpty, 
-  IsOptional, 
-  IsEnum, 
-  MinLength, 
-  MaxLength, 
+
+
+
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  MinLength,
+  MaxLength,
   IsArray,
-  IsNumber, 
-  Validate
+  Validate,
+  isURL,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { isURL } from 'class-validator';
-
-import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 
 // Custom validator: URL or gallery filename
 @ValidatorConstraint({ name: 'IsUrlOrGallery', async: false })
@@ -116,7 +134,7 @@ class IsUrlOrGallery implements ValidatorConstraintInterface {
     // Allow full URL
     if (isURL(value, { require_protocol: true })) return true;
 
-    // Allow "gallery selection" — simple filename pattern
+    // Allow "gallery selection" filename pattern
     const galleryPattern = /^[\w-]+\.(jpg|jpeg|png|webp)$/i;
     if (galleryPattern.test(value)) return true;
 
@@ -137,7 +155,6 @@ export class CreatePostDto {
 
   @IsOptional()
   @Transform(({ value, obj }) => {
-
     if (!value && obj.title) {
       return obj.title
         .toLowerCase()
@@ -153,26 +170,24 @@ export class CreatePostDto {
   @MinLength(10)
   content: string;
 
-  
   @IsOptional()
   @Validate(IsUrlOrGallery)
   thumbnail?: string;
 
-@IsOptional()
+  @IsOptional()
   @IsString()
   thumbnailPublicId?: string;
 
   @IsOptional()
-@Transform(({ value }) =>
-  typeof value === 'string' && value.trim().length === 0
-    ? undefined
-    : value
-)
-@IsString()
-@MinLength(10)
-@MaxLength(500)
-excerpt?: string;
-
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim().length === 0
+      ? undefined
+      : value,
+  )
+  @IsString()
+  @MinLength(10)
+  @MaxLength(500)
+  excerpt?: string;
 
   @IsOptional()
   @IsArray()
@@ -180,9 +195,13 @@ excerpt?: string;
   tags?: string[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  categories?: string[];
+
+  @IsOptional()
   @IsString()
   authorId?: string;
-
 
   @IsOptional()
   @IsString()
