@@ -22,36 +22,7 @@ export class AuthController {
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
-  // @Post('forgot-password')
-  // @HttpCode(HttpStatus.OK) 
-  // forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-  //   return this.authService.forgotPassword(forgotPasswordDto);
-  // }
-
-  // @Post('verify-reset-code')
-  // @HttpCode(HttpStatus.OK)
-  // verifyResetCode(@Body() verifyResetCodeDto: VerifyResetCodeDto) {
-  //   return this.authService.verifyResetCode(verifyResetCodeDto);
-  // }
-
-  // @Post('reset-password')
-  // @HttpCode(HttpStatus.OK)
-  // resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-  //   return this.authService.resetPassword(resetPasswordDto);
-  // }
-
-  // @Post('resend-reset-code')
-  // @HttpCode(HttpStatus.OK)
-  // resendResetCode(@Body() body: { email: string }) {
-  //   return this.authService.resendResetCode(body.email);
-  // }
-
-  // @Post('check-reset-code')
-  // @HttpCode(HttpStatus.OK)
-  // checkResetCode(@Body() body: { email: string; resetCode: string }) {
-  //   return this.authService.checkResetCodeStatus(body.email, body.resetCode);
-  // }
-  
+ 
   @Get('google')
   @UseGuards(OptionalGoogleAuthGuard)
   async googleAuth(@Req() req) {
@@ -62,8 +33,7 @@ export class AuthController {
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const { accessToken, user } = req.user || {};
 
-    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
-
+const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
     if (!accessToken) {
       throw new NotFoundException();
     }
