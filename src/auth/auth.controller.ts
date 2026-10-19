@@ -1,11 +1,7 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req, Res, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Res, NotFoundException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { OptionalGoogleAuthGuard } from './guards/optional-google.guard';
 import type { Response } from 'express';
 
@@ -22,18 +18,28 @@ export class AuthController {
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
- 
+
   @Get('google')
   @UseGuards(OptionalGoogleAuthGuard)
-  async googleAuth(@Req() req) {
-  }
+  async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @UseGuards(OptionalGoogleAuthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const { accessToken, user } = req.user || {};
 
-const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      process.env.NEXT_PUBLIC_FRONTEND_URL ||
+      'http://localhost:3000';
+
+    console.log(
+      'GOOGLE REDIRECT frontendUrl =',
+      JSON.stringify(frontendUrl),
+      'FRONTEND_URL =',
+      JSON.stringify(process.env.FRONTEND_URL),
+    );
+
     if (!accessToken) {
       throw new NotFoundException();
     }
