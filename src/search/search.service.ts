@@ -71,6 +71,9 @@ export class SearchService {
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
   ) {}
 
+  private escapeRegex(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
   /* ---------------------------------- */
   /* MongoDB Text Search Methods */
   /* ---------------------------------- */
@@ -229,9 +232,9 @@ export class SearchService {
     query: string,
     limit = 10,
     type?: SearchType,
-  ): Promise<{ suggestions: SearchResult[] }> {
+  ): Promise<any> {
     const q = query.trim();
-    if (q.length < 2) return { suggestions: [] };
+    if (q.length < 2) return { suggestions: [], query: q };
 
     this.recordSearch(q);
     let results: SearchResult[] = [];
@@ -266,18 +269,22 @@ export class SearchService {
     }
 
     // Sort by score (MongoDB text score or our simple scoring)
-    return {
-      suggestions: results
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit),
-    };
+    const suggestions = results
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+    const res: any = { suggestions };
+    if (type) {
+      res.type = type;
+    }
+    res.query = query;
+    return res;
   }
 
   async quickSearch(
     query: string,
-  ): Promise<{ results: SearchResult[] }> {
+  ): Promise<any> {
     const { suggestions } = await this.getSuggestions(query, 5);
-    return { results: suggestions };
+    return { results: suggestions, posts: suggestions.filter(s => s.type === 'post'), users: suggestions.filter(s => s.type === 'user') };
   }
 
   async getPopularSearches(

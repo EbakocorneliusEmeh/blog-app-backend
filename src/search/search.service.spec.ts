@@ -7,6 +7,7 @@ import { Post } from '../post/post.schema';
 const mockUserModel = {
   find: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
+  sort: jest.fn().mockReturnThis(),
   limit: jest.fn().mockReturnThis(),
   lean: jest.fn().mockResolvedValue([]),
 };
@@ -14,8 +15,10 @@ const mockUserModel = {
 const mockPostModel = {
   find: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
+  sort: jest.fn().mockReturnThis(),
   limit: jest.fn().mockReturnThis(),
   lean: jest.fn().mockResolvedValue([]),
+  aggregate: jest.fn().mockResolvedValue([]),
 };
 
 describe('SearchService', () => {
