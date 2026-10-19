@@ -69,27 +69,28 @@ export class DashboardController {
       
       const userId = req.user.sub || req.user.userId;
       
-      // Get current user to check for existing picture
+      // Get current user to check for an existing picture to delete later
       const currentUser = await this.usersService.findById(userId);
       if (!currentUser) {
         throw new BadRequestException('User not found');
       }
-      
+      const oldPublicId = currentUser.profilePicturePublicId;
 
       this.logger.log(`Uploading new profile picture: ${file.originalname} (${file.size} bytes)`);
       const upload = await this.cloudinaryService.uploadImage(file, 'user-profiles');
       
-      // Update user with both URL and public ID
+      // Update user with the new URL and public ID
       await this.usersService.updateProfilePicture(
         userId, 
         upload.url, 
         upload.publicId
       );
 
-      if (currentUser.profilePicturePublicId) {
+      // After successfully updating the user, delete the old picture from Cloudinary
+      if (oldPublicId) {
         try {
-          await this.cloudinaryService.deleteImage(currentUser.profilePicturePublicId);
-          this.logger.log(`Deleted old profile picture: ${currentUser.profilePicturePublicId}`);
+          this.logger.log(`Deleting old profile picture: ${oldPublicId}`);
+          await this.cloudinaryService.deleteImage(oldPublicId);
         } catch (deleteError) {
           this.logger.warn(`Failed to delete old profile picture: ${deleteError.message}`);
         }
