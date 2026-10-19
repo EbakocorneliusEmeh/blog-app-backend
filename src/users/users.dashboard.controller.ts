@@ -1,11 +1,11 @@
 import { 
   Controller, Get, Patch, UseGuards, Req, 
-  UseInterceptors, UploadedFiles, BadRequestException,
+  UseInterceptors, UploadedFile, BadRequestException,
   Body,
   Logger,
-  NotFoundException, Post
+  NotFoundException, Post, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TenantService } from '../tenants/tenant.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
@@ -55,16 +55,20 @@ export class DashboardController {
 
   // Upload/Update profile picture - THIS WILL BE ACCESSIBLE AT /user/profile/picture
   @Patch('profile/picture')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'profilePicture', maxCount: 1 },
-    { name: 'avatar', maxCount: 1 },
-  ]))
+  @UseInterceptors(FileInterceptor('picture'))
   async updateProfilePicture(
     @Req() req, 
-    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: true,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|webp)$/ }),
+        ],
+      })
+    ) file: Express.Multer.File,
   ) {
     try {
-      const file = this.getProfilePictureFile(files);
       this.logger.log(`Uploading profile picture for user: ${req.user?.userId || req.user?.sub}`);
       
       const userId = req.user.sub || req.user.userId;
@@ -111,16 +115,23 @@ export class DashboardController {
   }
 
   @Post('avatar')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'profilePicture', maxCount: 1 },
-    { name: 'avatar', maxCount: 1 },
-  ]))
+  @UseInterceptors(FileInterceptor('picture'))
   async uploadAvatar(
     @Req() req,
-    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: true,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|webp)$/ }),
+        ],
+      })
+    ) file: Express.Multer.File,
   ) {
-    return this.updateProfilePicture(req, files);
+    // This endpoint now simply forwards to the main update logic
+    return this.updateProfilePicture(req, file);
   }
+
 
   private getProfilePictureFile(
     files: Record<string, Express.Multer.File[]> | undefined,
