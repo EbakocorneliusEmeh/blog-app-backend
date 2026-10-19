@@ -124,21 +124,27 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-// Custom validator: URL or gallery filename
+// Custom validator: full URL, relative path, or gallery filename
 @ValidatorConstraint({ name: 'IsUrlOrGallery', async: false })
 class IsUrlOrGallery implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments) {
-    if (!value) return true; // optional
+    if (value === undefined || value === null || value === '') return true; // optional
     if (typeof value !== 'string') return false;
 
-    // Allow full URL
-    if (isURL(value, { require_protocol: true })) return true;
+    // Full http(s) URL (also allows localhost and IP addresses)
+    if (
+      isURL(value, {
+        require_protocol: true,
+        protocols: ['http', 'https'],
+        require_tld: false,
+      })
+    ) {
+      return true;
+    }
 
-    // Allow "gallery selection" filename pattern
-    const galleryPattern = /^[\w-]+\.(jpg|jpeg|png|webp)$/i;
-    if (galleryPattern.test(value)) return true;
-
-    return false;
+    // Relative path or gallery filename, e.g. "photo.jpg", "/uploads/photo.jpg", "gallery/a-1.png"
+    const pathPattern = /^(?!.*\.\.)\/?[\w\-./%]+\.(jpg|jpeg|png|webp|gif|avif|svg)$/i;
+    return pathPattern.test(value);
   }
 
   defaultMessage(args: ValidationArguments) {
